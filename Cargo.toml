@@ -1,0 +1,5 @@
+[package]
+name = "tinyrenderer"
+version = "0.1.0"
+authors = ["Fabian Bergström <fabian@fmbb.se>"]
+edition = "2018"

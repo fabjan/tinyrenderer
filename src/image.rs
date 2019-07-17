@@ -30,10 +30,13 @@ impl Image {
         self.flipped = !self.flipped;
     }
     pub fn put(&mut self, x: usize, y: usize, color: Color) {
-        let real_y = if self.flipped { self.height - y } else { y } ;
-        self.pixels[x % self.width + real_y * self.width] = color;
+        let real_y = if self.flipped { self.height - y } else { y };
+        let pixel_index = x % self.width + real_y * self.width;
+        if (0..self.pixels.len()).contains(&pixel_index) {
+            self.pixels[pixel_index] = color;
+        }
     }
-    pub fn line(&mut self, x0: usize, y0: usize, x1: usize, y1: usize, color: Color) {
+    pub fn line(&mut self, x0: f64, y0: f64, x1: f64, y1: f64, color: Color) {
         let (mut x0, mut y0, mut x1, mut y1) = (x0, y0, x1, y1);
         let dx = (x1 as i32 - x0 as i32).abs();
         let dy = (y1 as i32 - y0 as i32).abs();
@@ -47,7 +50,7 @@ impl Image {
             mem::swap(&mut x0, &mut x1);
             mem::swap(&mut y0, &mut y1);
         }
-        for x in x0..x1 {
+        for x in (x0 as usize)..(x1 as usize) {
             let t: f64 = (x as f64 - x0 as f64) / ((x1 - x0) as f64);
             let y: f64 = y0 as f64 * (1. - t) + (y1 as f64 * t);
             if steep {

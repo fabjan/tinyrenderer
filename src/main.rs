@@ -12,7 +12,7 @@ use tinyrenderer::geometry::Vec3f;
 
 fn main() {
 
-    let obj_file = File::open("head.obj").expect("file `head.obj` missing");
+    let obj_file = File::open("african_head.obj").expect("obj file missing");
     let head = Model::from_obj(BufReader::new(obj_file));
     let light_dir = Vec3f { x: 0., y: 0., z: -1. };
 

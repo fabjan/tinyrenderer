@@ -11,11 +11,13 @@ use rand::prelude::random;
 use tinyrenderer::image::Image;
 use tinyrenderer::model::Model;
 use tinyrenderer::geometry::Vec2f;
+use tinyrenderer::geometry::Vec3f;
 
 fn main() {
 
     let obj_file = File::open("head.obj").expect("file `head.obj` missing");
     let head = Model::from_obj(BufReader::new(obj_file));
+    let light_dir = Vec3f { x: 0., y: 0., z: -1. };
 
     let width = 800;
     let height = 800;
@@ -23,25 +25,20 @@ fn main() {
     let fheight = height as f64;
     let mut image = Image::make(width, height);
 
-    let white = [255, 255, 255];
-
     image.flip();
     for face in head.faces() {
-        let vertices = [head.vert(face.x as usize), head.vert(face.y as usize), head.vert(face.z as usize)];
-        let t1 = Vec2f {
-            x: (vertices[0].x+1.) * fwidth/2.,
-            y: (vertices[0].y+1.) * fheight/2.,
-        };
-        let t2 = Vec2f {
-            x: (vertices[1].x+1.) * fwidth/2.,
-            y: (vertices[1].y+1.) * fheight/2.,
-        };
-        let t3 = Vec2f {
-            x: (vertices[2].x+1.) * fwidth/2.,
-            y: (vertices[2].y+1.) * fheight/2.,
-        };
-        let color: [u8; 3] = [ random(), random(), random() ];
-        image.triangle(t1, t2, t3, color);
+        let world_coords = [head.vert(face.x as usize), head.vert(face.y as usize), head.vert(face.z as usize)];
+        let screen_coords: Vec<Vec2f> = world_coords.iter()
+            .map(|v| Vec2f { x: (v.x+1.) * fwidth/2., y: (v.y+1.) * fheight/2. } )
+            .collect();
+        let mut n = (world_coords[2]-world_coords[0]).cross(world_coords[1]-world_coords[0]);
+        n.normalize();
+        let intensity = n*light_dir;
+        if intensity > 0. {
+            let intensity = (intensity*255.) as u8;
+            let color = [intensity, intensity, intensity];
+            image.triangle(screen_coords[0], screen_coords[1], screen_coords[2], color);
+        }
     }
 
     let mut writer = BufWriter::new(stdout());

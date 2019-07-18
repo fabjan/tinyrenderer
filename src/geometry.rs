@@ -75,8 +75,17 @@ impl<T: ops::Mul<T, Output = T> + ops::Add<T, Output = T>> ops::Mul<Vec3<T>> for
     }
 }
 
+impl Vec3f {
+    pub fn norm(&self) -> f64 {
+        (self.x*self.x + self.y*self.y + self.z*self.z).sqrt()
+    }
+    pub fn normalize(&mut self) {
+        *self = *self*(1./self.norm());
+    }
+}
+
 impl<T: Copy + ops::Mul<T, Output = T> + ops::Sub<T, Output = T>> Vec3<T> {
-    fn cross(&self, other: Vec3<T>) -> Vec3<T> {
+    pub fn cross(&self, other: Vec3<T>) -> Vec3<T> {
         Vec3 {
             x: self.y*other.z - self.z*other.y,
             y: self.z*other.x - self.x*other.z,

@@ -21,6 +21,7 @@ fn main() {
     let fwidth = width as f64;
     let fheight = height as f64;
     let mut image = Image::make(width, height);
+    let mut zbuffer = vec![std::f64::MIN; width*height];
 
     image.flip();
     for face in head.faces() {
@@ -35,7 +36,7 @@ fn main() {
         if intensity > 0. {
             let intensity = (intensity*255.) as u8;
             let color = [intensity, intensity, intensity];
-            image.triangle_points(screen_coords[0], screen_coords[1], screen_coords[2], color);
+            image.triangle_points(&mut zbuffer, screen_coords[0], screen_coords[1], screen_coords[2], color);
         }
     }
 

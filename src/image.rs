@@ -91,7 +91,7 @@ impl Image {
             }
         }
     }
-    pub fn triangle_points(&mut self, t0: Vec3f, t1: Vec3f, t2: Vec3f, color: Color) {
+    pub fn triangle_points(&mut self, zbuffer: &mut Vec<f64>, t0: Vec3f, t1: Vec3f, t2: Vec3f, color: Color) {
         let (mut xmin, mut ymin) = (f64::MAX, f64::MAX);
         let (mut xmax, mut ymax) = (f64::MIN, f64::MIN);
         for t in [t0, t1, t2].iter() {
@@ -114,7 +114,11 @@ impl Image {
                 p.z  = t0.z*bc_screen.x;
                 p.z += t1.z*bc_screen.y;
                 p.z += t2.z*bc_screen.z;
-                self.put(p.x as usize, p.y as usize, color);
+                let fragment_index = (p.x as usize) + (p.y as usize)*self.width;
+                if zbuffer[fragment_index]<p.z {
+                    zbuffer[fragment_index] = p.z;
+                    self.put(p.x as usize, p.y as usize, color);
+                }
             }
         }
     }

@@ -1,9 +1,13 @@
+extern crate rand;
+extern crate tinyrenderer;
+
 use std::fs::File;
 use std::io::BufReader;
 use std::io::BufWriter;
 use std::io::stdout;
 
-extern crate tinyrenderer;
+use rand::prelude::random;
+
 use tinyrenderer::image::Image;
 use tinyrenderer::model::Model;
 use tinyrenderer::geometry::Vec2f;
@@ -36,7 +40,8 @@ fn main() {
             x: (vertices[2].x+1.) * fwidth/2.,
             y: (vertices[2].y+1.) * fheight/2.,
         };
-        image.triangle(t1, t2, t3, white);
+        let color: [u8; 3] = [ random(), random(), random() ];
+        image.triangle(t1, t2, t3, color);
     }
 
     let mut writer = BufWriter::new(stdout());

@@ -65,13 +65,28 @@ impl Image {
     pub fn line(&mut self, t0: Vec2f, t1: Vec2f, color: Color) {
         self.bresenham(t0.x, t0.y, t1.x, t1.y, color);
     }
-    pub fn triangle(&mut self, t0: Vec2f, t1: Vec2f, t2: Vec2f, color: Color) { 
+    pub fn triangle(&mut self, t0: Vec2f, t1: Vec2f, t2: Vec2f, color: Color) {
+        if t0.y==t1.y && t0.y==t2.y { return };
         let (mut t0, mut t1, mut t2) = (t0, t1, t2);
         if t0.y>t1.y { mem::swap(&mut t0, &mut t1) };
         if t0.y>t2.y { mem::swap(&mut t0, &mut t2) };
         if t1.y>t2.y { mem::swap(&mut t1, &mut t2) };
-        self.line(t0, t1, color);
-        self.line(t1, t2, color);
-        self.line(t2, t0, color);
+        let total_height = (t2.y-t0.y) as usize;
+        for i in 0..total_height {
+            let second_half = i as f64 > t1.y-t0.y || t1.y == t0.y;
+            let segment_height = if second_half { t2.y-t1.y } else { t1.y-t0.y };
+            let alpha = i as f64 / total_height as f64;
+            let beta = if second_half {
+                (i as f64 - (t1.y-t0.y)) / segment_height as f64
+            } else {
+                i as f64 / segment_height as f64
+            };
+            let mut A = t0 + (t2-t0)*alpha;
+            let mut B = if second_half { t1 + (t2-t1)*beta } else { t0 + (t1-t0)*beta };
+            if A.x > B.x { mem::swap(&mut A, &mut B) }
+            for j in (A.x as usize)..(B.x as usize + 1) {
+                self.put(j, t0.y as usize + i, color);
+            }
+        }
     }
 }

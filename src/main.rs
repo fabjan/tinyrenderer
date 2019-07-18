@@ -6,11 +6,8 @@ use std::io::BufReader;
 use std::io::BufWriter;
 use std::io::stdout;
 
-use rand::prelude::random;
-
 use tinyrenderer::image::Image;
 use tinyrenderer::model::Model;
-use tinyrenderer::geometry::Vec2f;
 use tinyrenderer::geometry::Vec3f;
 
 fn main() {
@@ -28,8 +25,9 @@ fn main() {
     image.flip();
     for face in head.faces() {
         let world_coords = [head.vert(face.x as usize), head.vert(face.y as usize), head.vert(face.z as usize)];
-        let screen_coords: Vec<Vec2f> = world_coords.iter()
-            .map(|v| Vec2f { x: (v.x+1.) * fwidth/2., y: (v.y+1.) * fheight/2. } )
+        let screen_coords: Vec<Vec3f> = world_coords.iter()
+            //.map(|v| Vec2f { x: (v.x+1.) * fwidth/2., y: (v.y+1.) * fheight/2. } )
+            .map(|v| Vec3f { x: (v.x+1.) * fwidth/2., y: (v.y+1.) * fheight/2., z: v.z } )
             .collect();
         let mut n = (world_coords[2]-world_coords[0]).cross(world_coords[1]-world_coords[0]);
         n.normalize();
@@ -37,7 +35,7 @@ fn main() {
         if intensity > 0. {
             let intensity = (intensity*255.) as u8;
             let color = [intensity, intensity, intensity];
-            image.triangle(screen_coords[0], screen_coords[1], screen_coords[2], color);
+            image.triangle_points(screen_coords[0], screen_coords[1], screen_coords[2], color);
         }
     }
 

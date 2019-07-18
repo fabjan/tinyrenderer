@@ -10,6 +10,12 @@ pub struct Vec2<T> {
 pub type Vec2f = Vec2<f64>;
 pub type Vec2i = Vec2<i32>;
 
+impl Vec2f {
+    pub fn zero() -> Vec2f {
+        Vec2f { x: 0., y: 0. }
+    }
+}
+
 impl<T: ops::Add<T, Output = T>> ops::Add<Vec2<T>> for Vec2<T> {
     type Output = Vec2<T>;
     fn add(self, other: Vec2<T>) -> Vec2<T> {
@@ -40,6 +46,12 @@ pub struct Vec3<T> {
 
 pub type Vec3f = Vec3<f64>;
 pub type Vec3i = Vec3<i32>;
+
+impl Vec3f {
+    pub fn zero() -> Vec3f {
+        Vec3f { x: 0., y: 0., z: 0. }
+    }
+}
 
 impl<T: fmt::Display> fmt::Display for Vec3<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

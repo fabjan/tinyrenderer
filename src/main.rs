@@ -6,6 +6,7 @@ use std::io::stdout;
 extern crate tinyrenderer;
 use tinyrenderer::image::Image;
 use tinyrenderer::model::Model;
+use tinyrenderer::geometry::Vec2f;
 
 fn main() {
 
@@ -23,17 +24,19 @@ fn main() {
     image.flip();
     for face in head.faces() {
         let vertices = [head.vert(face.x as usize), head.vert(face.y as usize), head.vert(face.z as usize)];
-        for v in 0..3 {
-            let v0 = vertices[v];
-            let v1 = vertices[(v+1) % 3];
-            let (x0, y0, x1, y1) = (
-                (v0.x+1.) * fwidth/2.,
-                (v0.y+1.) * fheight/2.,
-                (v1.x+1.) * fwidth/2.,
-                (v1.y+1.) * fheight/2.,
-            );
-            image.line(x0, y0, x1, y1, white);
-        }
+        let t1 = Vec2f {
+            x: (vertices[0].x+1.) * fwidth/2.,
+            y: (vertices[0].y+1.) * fheight/2.,
+        };
+        let t2 = Vec2f {
+            x: (vertices[1].x+1.) * fwidth/2.,
+            y: (vertices[1].y+1.) * fheight/2.,
+        };
+        let t3 = Vec2f {
+            x: (vertices[2].x+1.) * fwidth/2.,
+            y: (vertices[2].y+1.) * fheight/2.,
+        };
+        image.triangle(t1, t2, t3, white);
     }
 
     let mut writer = BufWriter::new(stdout());

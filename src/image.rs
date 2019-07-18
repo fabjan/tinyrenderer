@@ -1,5 +1,7 @@
 use std::mem;
 
+use crate::geometry::Vec2f;
+
 type Color = [u8; 3];
 
 pub struct Image {
@@ -36,7 +38,7 @@ impl Image {
             self.pixels[pixel_index] = color;
         }
     }
-    pub fn line(&mut self, x0: f64, y0: f64, x1: f64, y1: f64, color: Color) {
+    pub fn bresenham(&mut self, x0: f64, y0: f64, x1: f64, y1: f64, color: Color) {
         let (mut x0, mut y0, mut x1, mut y1) = (x0, y0, x1, y1);
         let dx = (x1 as i32 - x0 as i32).abs();
         let dy = (y1 as i32 - y0 as i32).abs();
@@ -59,5 +61,17 @@ impl Image {
                 self.put(x, y as usize, color);
             }
         }
+    }
+    pub fn line(&mut self, t0: Vec2f, t1: Vec2f, color: Color) {
+        self.bresenham(t0.x, t0.y, t1.x, t1.y, color);
+    }
+    pub fn triangle(&mut self, t0: Vec2f, t1: Vec2f, t2: Vec2f, color: Color) { 
+        let (mut t0, mut t1, mut t2) = (t0, t1, t2);
+        if t0.y>t1.y { mem::swap(&mut t0, &mut t1) };
+        if t0.y>t2.y { mem::swap(&mut t0, &mut t2) };
+        if t1.y>t2.y { mem::swap(&mut t1, &mut t2) };
+        self.line(t0, t1, color);
+        self.line(t1, t2, color);
+        self.line(t2, t0, color);
     }
 }

@@ -13,6 +13,10 @@ use tinyrenderer::geometry::Vec3f;
 fn main() {
 
     let obj_file = File::open("african_head.obj").expect("obj file missing");
+    let mut texture_file = File::open("african_head_diffuse.tga").expect("diffuse texture missing");
+
+    let texture_image = Image::from_tga(&mut texture_file);
+
     let head = Model::from_obj(BufReader::new(obj_file));
     let light_dir = Vec3f { x: 0., y: 0., z: -1. };
 
@@ -41,5 +45,5 @@ fn main() {
     }
 
     let mut writer = BufWriter::new(stdout());
-    image.write(&mut writer);
+    texture_image.write(&mut writer);
 }

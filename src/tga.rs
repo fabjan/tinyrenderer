@@ -5,11 +5,13 @@ use crate::image::Image;
 impl Image {
     pub fn from_tga<R: Read>(data: &mut R) -> Image {
         let header = TgaHeader::from_data(data);
-        // only 24 bit RLE is implemented
+        // only 24 bit RLE is implemented, origins from the left
         assert_eq!(header.bit_depth, 24);
         assert_eq!(header.image_type, 10);
+        assert!(header.origin == 0b00 || header.origin == 0b10);
         let pixel_count = header.image_width * header.image_height;
-        let pixels = read_image_data_rle(data, pixel_count);
+        let upsidedown = header.origin == 0b00;
+        let pixels = read_image_data_rle(data, pixel_count, header.image_width, upsidedown);
         Image {
             width: header.image_width,
             height: header.image_height,
@@ -76,12 +78,26 @@ fn to_u16(bytes: &[u8]) -> u16 {
     ((bytes[1] as u16) << 8) | bytes[0] as u16
 }
 
-fn read_image_data_rle<R: Read>(data: &mut R, count: usize) -> Vec<[u8;3]> {
+fn read_image_data_rle<R: Read>(data: &mut R, count: usize, width: usize, upsidedown: bool) -> Vec<[u8;3]> {
     let mut pixels = Vec::new();
     while pixels.len() < count {
-        read_pixel_packet(data, &mut pixels);
+        let mut row = read_pixel_row_rle(data, width);
+        if upsidedown {
+            row.extend(pixels);
+            pixels = row;
+        } else {
+            pixels.extend(row);
+        }
     }
     pixels
+}
+
+fn read_pixel_row_rle<R: Read>(source: &mut R, width: usize) -> Vec<[u8;3]> {
+    let mut pixel_row = Vec::new();
+    while pixel_row.len() < width { // RLE packets should not pass the image width
+        read_pixel_packet(source, &mut pixel_row);
+    }
+    pixel_row
 }
 
 fn read_pixel_packet<R: Read>(source: &mut R, sink: &mut Vec<[u8;3]>) {

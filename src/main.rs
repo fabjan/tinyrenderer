@@ -11,18 +11,17 @@ use tinyrenderer::model::Model;
 use tinyrenderer::geometry::Vec2f;
 use tinyrenderer::geometry::Vec3f;
 use tinyrenderer::render::to_screen_coords;
-use tinyrenderer::render::triangle_flat;
+use tinyrenderer::render::triangle_diffuse;
 
 fn main() {
 
     let obj_file = File::open("african_head.obj").expect("obj file missing");
-
-//    let mut texture_file = File::open("african_head_diffuse.tga").expect("diffuse texture missing");
-//    let texture_image = Image::from_tga(&mut texture_file);
-
+    let mut texture_file = File::open("african_head_diffuse.tga").expect("diffuse texture missing");
+    let mut texture_image = Image::from_tga(&mut texture_file);
+    texture_image.flip();
     let head = Model::from_obj(BufReader::new(obj_file));
-    let light_dir = Vec3f { x: 0., y: 0., z: -1. };
 
+    let light_dir = Vec3f { x: 0., y: 0., z: -1. };
     let width = 800;
     let height = 800;
 
@@ -34,19 +33,20 @@ fn main() {
 
     let mut zbuffer = vec![std::f64::MIN; width*height];
 
-    for face in head.faces() {
+    for (_i, face) in head.faces().enumerate() {
         let w0 = head.vert(face.verts.x as usize);
         let w1 = head.vert(face.verts.y as usize);
         let w2 = head.vert(face.verts.z as usize);
         let s0 = to_screen_coords(w0, translate, scale);
         let s1 = to_screen_coords(w1, translate, scale);
         let s2 = to_screen_coords(w2, translate, scale);
+        let uv0 = head.uv(face.uvs.x as usize);
+        let uv1 = head.uv(face.uvs.y as usize);
+        let uv2 = head.uv(face.uvs.z as usize);
         let n = (w2-w0).cross(w1-w0).normalized();
         let intensity = n*light_dir;
         if intensity > 0. {
-            let intensity = (intensity*255.) as u8;
-            let color = [intensity, intensity, intensity];
-            triangle_flat(&mut canvas, &mut zbuffer, s0, s1, s2, color);
+            triangle_diffuse(&mut canvas, &mut zbuffer, s0, s1, s2, uv0, uv1, uv2, &texture_image, intensity);
         }
     }
 

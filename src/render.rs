@@ -92,6 +92,44 @@ pub fn triangle_flat(canvas: &mut Image, zbuffer: &mut Vec<f64>, t0: Vec3f, t1: 
     }
 }
 
+pub fn triangle_diffuse(canvas: &mut Image, zbuffer: &mut Vec<f64>, t0: Vec3f, t1: Vec3f, t2: Vec3f, uv0: Vec3f, uv1: Vec3f, uv2: Vec3f, texture: &Image, intensity: f64) {
+    if t0.y==t1.y && t0.y==t2.y { return };
+    let (mut t0, mut t1, mut t2) = (t0, t1, t2);
+    let (mut uv0, mut uv1, mut uv2) = (uv0, uv1, uv2);
+    if t0.y>t1.y { mem::swap(&mut t0, &mut t1); mem::swap(&mut uv0, &mut uv1) };
+    if t0.y>t2.y { mem::swap(&mut t0, &mut t2); mem::swap(&mut uv0, &mut uv2) };
+    if t1.y>t2.y { mem::swap(&mut t1, &mut t2); mem::swap(&mut uv1, &mut uv2) };
+    let total_height = (t2.y-t0.y) as usize;
+    for i in 0..total_height {
+        let second_half = i as f64 > t1.y-t0.y || t1.y == t0.y;
+        let segment_height = if second_half { t2.y-t1.y } else { t1.y-t0.y };
+        let alpha = i as f64 / total_height as f64;
+        let beta = if second_half {
+            (i as f64 - (t1.y-t0.y)) / segment_height
+        } else {
+            i as f64 / segment_height
+        };
+        let mut a   = t0 + (t2-t0)*alpha;
+        let mut b   = if second_half { t1 + (t2-t1)*beta } else { t0 + (t1-t0)*beta };
+        let mut uva = uv0 + (uv2-uv0)*alpha;
+        let mut uvb = if second_half { uv1 + (uv2-uv1)*beta } else { uv0 + (uv1-uv0)*beta };
+        if a.x > b.x { mem::swap(&mut a, &mut b); mem::swap(&mut uva, &mut uvb) }
+        let (x0, x1) = (a.x as usize, b.x as usize);
+        for j in x0..(x1+1) {
+            let phi = if x0==x1 { 1.0 } else { (j as f64 - x0 as f64)/(x1 as f64 - x0 as f64) };
+            let p = a + (b-a)*phi;
+            let fragment_index = (p.x as usize) + (p.y as usize)*canvas.width;
+            if zbuffer[fragment_index]<p.z {
+                zbuffer[fragment_index] = p.z;
+                let uvp = uva + (uvb-uva)*phi;
+                let color = texture.get_unit(uvp.x, uvp.y);
+                let color = [ (color[0] as f64 * intensity) as u8, (color[1] as f64 * intensity) as u8, (color[2] as f64 * intensity) as u8 ];
+                canvas.put(p.x as usize, p.y as usize, color);
+            }
+        }
+    }
+}
+
 pub fn to_screen_coords(world_coords: Vec3f, translate: Vec2f, scale: Vec2f) -> Vec3f {
     Vec3f {
         x: (world_coords.x+translate.x) * scale.x,

@@ -1,6 +1,5 @@
 use std::io::BufRead;
 
-use crate::geometry::Vec2f;
 use crate::geometry::Vec3f;
 use crate::geometry::Vec3i;
 

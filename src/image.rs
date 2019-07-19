@@ -29,4 +29,14 @@ impl Image {
             self.pixels[pixel_index] = color;
         }
     }
+    pub fn get(&self, x: usize, y: usize) -> Color {
+        let y = if self.flipped { self.height - y } else { y };
+        let pixel_index = x % self.width + y * self.width;
+        self.pixels[pixel_index]
+    }
+    pub fn get_unit(&self, x: f64, y: f64) -> Color {
+        let x = (x * self.width as f64) as usize;
+        let y = (y * self.height as f64) as usize;
+        self.get(x, y)
+    }
 }

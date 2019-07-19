@@ -108,3 +108,73 @@ impl<T: Copy + ops::Mul<T, Output = T> + ops::Sub<T, Output = T>> Vec3<T> {
         }
     }
 }
+
+pub struct Matrix {
+    m: Vec<Vec<f64>>,
+    pub rows: usize,
+    pub cols: usize,
+}
+
+impl fmt::Display for Matrix {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for i in 0..self.rows {
+            write!(f, "\n|").unwrap();
+            for j in 0..self.cols {
+                write!(f, " {}", self.get(i, j)).unwrap();
+            }
+            write!(f, "|").unwrap();
+        }
+        Ok(())
+    }
+}
+
+impl Matrix {
+    pub fn new(rows: usize, cols: usize) -> Matrix {
+        let col = vec![0.0;cols];
+        let m = vec![col;rows];
+        Matrix {
+            m: m,
+            rows: rows,
+            cols: cols,
+        }
+    }
+    pub fn identity(dimensions: usize) -> Matrix {
+        let mut result = Matrix::new(dimensions, dimensions);
+        for i in 0..dimensions {
+            for j in 0..dimensions {
+                result.put(i, j, if i==j { 1.0 } else { 0.0 });
+            }
+        }
+        result
+    }
+    pub fn get(&self, row: usize, col: usize) -> f64 {
+        self.m[row][col]
+    }
+    pub fn put(&mut self, row: usize, col: usize, v: f64) {
+        self.m[row][col] = v;
+    }
+}
+
+impl ops::Mul<&Matrix> for &Matrix {
+    type Output = Matrix;
+    fn mul(self, other: &Matrix) -> Matrix {
+        assert!(self.cols == other.rows);
+        let mut result = Matrix::new(self.rows, other.cols);
+        for i in 0..self.rows {
+            for j in 0..other.cols {
+                result.put(i, j, 0.0);
+                for k in 0..self.cols {
+                    result.put(i, j, result.get(i, j)+self.get(i, k)*other.get(k, j));
+                }
+            }
+        }
+        result
+    }
+}
+
+impl ops::Mul<&Matrix> for Matrix {
+    type Output = Matrix;
+    fn mul(self, other: &Matrix) -> Matrix {
+        &self*other
+    }
+}

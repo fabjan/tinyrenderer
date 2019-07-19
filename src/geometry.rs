@@ -94,6 +94,9 @@ impl Vec3f {
     pub fn normalize(&mut self) {
         *self = *self*(1./self.norm());
     }
+    pub fn normalized(&self) -> Vec3f {
+        *self*(1./self.norm())
+    }
 }
 
 impl<T: Copy + ops::Mul<T, Output = T> + ops::Sub<T, Output = T>> Vec3<T> {

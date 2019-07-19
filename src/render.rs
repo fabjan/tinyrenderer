@@ -93,6 +93,41 @@ pub fn triangle_flat(canvas: &mut Image, zbuffer: &mut Vec<f64>, t0: Vec3f, t1: 
 }
 
 pub fn triangle_diffuse(canvas: &mut Image, zbuffer: &mut Vec<f64>, t0: Vec3f, t1: Vec3f, t2: Vec3f, uv0: Vec3f, uv1: Vec3f, uv2: Vec3f, texture: &Image, intensity: f64) {
+    let (mut xmin, mut ymin) = (f64::MAX, f64::MAX);
+    let (mut xmax, mut ymax) = (f64::MIN, f64::MIN);
+    for t in [t0, t1, t2].iter() {
+        xmin = xmin.min(t.x);
+        xmax = xmax.max(t.x);
+        ymin = ymin.min(t.y);
+        ymax = ymax.max(t.y);
+    }
+    xmin = xmin.max(0.);
+    xmax = xmax.min(canvas.width as f64);
+    ymin = ymin.max(0.);
+    ymax = ymax.min(canvas.height as f64);
+    let mut p = Vec3f::zero();
+    for x in (xmin as usize)..(xmax as usize + 1) {
+        p.x = x as f64;
+        for y in (ymin as usize)..(ymax as usize + 1) {
+            p.y = y as f64;
+            let bc_screen = barycentric(t0, t1, t2, p);
+            if bc_screen.x<0. || bc_screen.y<0. || bc_screen.z<0. { continue };
+            p.z  = t0.z*bc_screen.x;
+            p.z += t1.z*bc_screen.y;
+            p.z += t2.z*bc_screen.z;
+            let fragment_index = (p.x as usize) + (p.y as usize)*canvas.width;
+            if zbuffer[fragment_index]<p.z {
+                zbuffer[fragment_index] = p.z;
+                let uv = uv0*bc_screen.x + uv1*bc_screen.y + uv2*bc_screen.z;
+                let mut color = texture.get_unit(uv.x, uv.y);
+                for i in 0..3 { color[i] = (color[i] as f64 * intensity) as u8 }
+                canvas.put(p.x as usize, p.y as usize, color);
+            }
+        }
+    }
+}
+
+pub fn triangle_diffuse_trace(canvas: &mut Image, zbuffer: &mut Vec<f64>, t0: Vec3f, t1: Vec3f, t2: Vec3f, uv0: Vec3f, uv1: Vec3f, uv2: Vec3f, texture: &Image, intensity: f64) {
     if t0.y==t1.y && t0.y==t2.y { return };
     let (mut t0, mut t1, mut t2) = (t0, t1, t2);
     let (mut uv0, mut uv1, mut uv2) = (uv0, uv1, uv2);

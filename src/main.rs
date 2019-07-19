@@ -9,10 +9,12 @@ use std::time::Instant;
 
 use tinyrenderer::image::Image;
 use tinyrenderer::model::Model;
-use tinyrenderer::geometry::Vec2f;
+use tinyrenderer::geometry::Matrix;
 use tinyrenderer::geometry::Vec3f;
-use tinyrenderer::render::to_screen_coords;
+use tinyrenderer::render::m2v;
 use tinyrenderer::render::triangle_diffuse;
+use tinyrenderer::render::viewport;
+use tinyrenderer::render::v2m;
 
 fn main() {
 
@@ -29,27 +31,29 @@ fn main() {
     texture_image.flip();
     eprintln!("...done ({}ms)", timer.elapsed().as_millis());
 
-    let light_dir = Vec3f { x: 0., y: 0., z: -1. };
     let width = 800;
     let height = 800;
+    let depth = 255;
 
-    let mut canvas = Image::make(width, height);
-    canvas.flip();
+    let light_dir = Vec3f { x: 0.7, y: 0.3, z: -1. };
 
-    let translate = Vec2f { x: 1.0, y: 1.0 }; // obj verts are around both sides of 0
-    let scale = Vec2f { x: width as f64 / 2.0, y: height as f64 / 2.0 };
-
-    let mut zbuffer = vec![std::f64::MIN; width*height];
+    let camera = Vec3f { x: 0.0, y: 0.0, z: 3.0 };
+    let mut projection = Matrix::identity(4);
+    projection.put(3, 2, -1.0/camera.z);
+    let view_port = viewport(width as f64/8.0, height as f64/8.0, width as f64*0.75, height as f64*0.75, depth as f64);
 
     eprint!("rendering...");
     let timer = Instant::now();
+    let mut canvas = Image::make(width, height);
+    canvas.flip();
+    let mut zbuffer = vec![std::f64::MIN; width*height];
     for (_i, face) in head.faces().enumerate() {
         let w0 = head.vert(face.verts.x as usize);
         let w1 = head.vert(face.verts.y as usize);
         let w2 = head.vert(face.verts.z as usize);
-        let s0 = to_screen_coords(w0, translate, scale);
-        let s1 = to_screen_coords(w1, translate, scale);
-        let s2 = to_screen_coords(w2, translate, scale);
+        let s0 = m2v(&view_port*&projection*&v2m(w0));
+        let s1 = m2v(&view_port*&projection*&v2m(w1));
+        let s2 = m2v(&view_port*&projection*&v2m(w2));
         let uv0 = head.uv(face.uvs.x as usize);
         let uv1 = head.uv(face.uvs.y as usize);
         let uv2 = head.uv(face.uvs.z as usize);

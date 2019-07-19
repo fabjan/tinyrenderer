@@ -1,6 +1,7 @@
 use std::f64;
 use std::mem;
 
+use crate::geometry::Matrix;
 use crate::geometry::Vec2f;
 use crate::geometry::Vec3f;
 use crate::image::Color;
@@ -182,4 +183,35 @@ fn barycentric(a: Vec3f, b: Vec3f, c: Vec3f, p: Vec3f) -> Vec3f {
     } else {
         Vec3f { x: -1., y: 1., z: 1. }
     }
+}
+
+pub fn m2v(m: Matrix) -> Vec3f {
+    Vec3f {
+        x: m.get(0, 0)/m.get(3, 0),
+        y: m.get(1, 0)/m.get(3, 0),
+        z: m.get(2, 0)/m.get(3, 0),
+    }
+}
+
+pub fn v2m(v: Vec3f) -> Matrix {
+    let mut m = Matrix::new(4, 1);
+    m.put(0, 0, v.x);
+    m.put(1, 0, v.y);
+    m.put(2, 0, v.z);
+    m.put(3, 0, 1.0);
+    m
+}
+
+pub fn viewport(x: f64, y: f64, w: f64, h: f64, depth: f64) -> Matrix {
+    let mut vp = Matrix::identity(4);
+
+    vp.put(0, 3, x+w/2.0);
+    vp.put(1, 3, y+h/2.0);
+    vp.put(2, 3, depth/2.0);
+
+    vp.put(0, 0, w/2.0);
+    vp.put(1, 1, h/2.0);
+    vp.put(2, 2, depth/2.0);
+
+    vp
 }

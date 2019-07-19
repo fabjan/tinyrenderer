@@ -3,9 +3,13 @@ use std::io::BufRead;
 use crate::geometry::Vec3f;
 use crate::geometry::Vec3i;
 
+pub struct Face {
+    pub verts: Vec3i,
+}
+
 pub struct Model {
     verts: Vec<Vec3f>,
-    faces: Vec<Vec3i>,
+    faces: Vec<Face>,
 }
 
 impl Model {
@@ -31,7 +35,10 @@ impl Model {
                         tokens.next().unwrap().split('/').next().unwrap().parse().unwrap(),
                     );
                     // in wavefront obj all indices start at 1, not zero
-                    obj_faces.push(Vec3i {x: a-1, y: b-1, z: c-1});
+                    let face = Face {
+                        verts: Vec3i { x: a-1, y: b-1, z: c-1 },
+                    };
+                    obj_faces.push(face);
                 }
                 _ => continue
             }
@@ -50,10 +57,10 @@ impl Model {
     pub fn vert(&self, i: usize) -> Vec3f {
         self.verts[i].clone()
     }
-    pub fn face(&self, i: usize) -> Vec3i {
-        self.faces[i].clone()
+    pub fn face(&self, i: usize) -> &Face {
+        &self.faces[i]
     }
-    pub fn faces(&self) -> std::slice::Iter<Vec3i> {
+    pub fn faces(&self) -> std::slice::Iter<Face> {
         self.faces.iter()
     }
 }

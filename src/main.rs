@@ -35,9 +35,9 @@ fn main() {
     let mut zbuffer = vec![std::f64::MIN; width*height];
 
     for face in head.faces() {
-        let w0 = head.vert(face.x as usize);
-        let w1 = head.vert(face.y as usize);
-        let w2 = head.vert(face.z as usize);
+        let w0 = head.vert(face.verts.x as usize);
+        let w1 = head.vert(face.verts.y as usize);
+        let w2 = head.vert(face.verts.z as usize);
         let s0 = to_screen_coords(w0, translate, scale);
         let s1 = to_screen_coords(w1, translate, scale);
         let s2 = to_screen_coords(w2, translate, scale);

@@ -35,7 +35,7 @@ fn main() {
     let height = 800;
     let depth = 255;
 
-    let light_dir = Vec3f { x: 0.7, y: 0.3, z: -1. };
+    let light_dir = Vec3f { x: 0.2, y: 0.1, z: -1. };
 
     let camera = Vec3f { x: 0.0, y: 0.0, z: 3.0 };
     let mut projection = Matrix::identity(4);

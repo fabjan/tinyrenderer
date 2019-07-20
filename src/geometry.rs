@@ -44,6 +44,12 @@ pub struct Vec3<T> {
     pub z: T,
 }
 
+impl<T> Vec3<T> {
+    pub fn new(x: T, y: T, z: T) -> Vec3<T> {
+        Vec3 { x: x, y: y, z: z }
+    }
+}
+
 pub type Vec3f = Vec3<f64>;
 pub type Vec3i = Vec3<i32>;
 
@@ -84,6 +90,18 @@ impl<T: ops::Mul<T, Output = T> + ops::Add<T, Output = T>> ops::Mul<Vec3<T>> for
     type Output = T;
     fn mul(self, other: Vec3<T>) -> T {
         self.x*other.x + self.y*other.y + self.z*other.z
+    }
+}
+
+impl<T> ops::Index<usize> for Vec3<T> {
+    type Output = T;
+    fn index(&self, i: usize) -> &T {
+        match i {
+            0 => &self.x,
+            1 => &self.y,
+            2 => &self.z,
+            _ => panic!("dimension out of range"),
+        }
     }
 }
 

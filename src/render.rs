@@ -215,3 +215,17 @@ pub fn viewport(x: f64, y: f64, w: f64, h: f64, depth: f64) -> Matrix {
 
     vp
 }
+
+pub fn lookat(eye: Vec3f, center: Vec3f, up: Vec3f) -> Matrix {
+    let z = (eye-center).normalized();
+    let x = up.cross(z).normalized();
+    let y = z.cross(x).normalized();
+    let mut res = Matrix::identity(4);
+    for i in 0..3 {
+        res.put(0, i, x[i]);
+        res.put(1, i, y[i]);
+        res.put(2, i, z[i]);
+        res.put(i, 3, -center[i]);
+    }
+    res
+}

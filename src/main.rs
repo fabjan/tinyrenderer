@@ -11,6 +11,7 @@ use tinyrenderer::image::Image;
 use tinyrenderer::model::Model;
 use tinyrenderer::geometry::Matrix;
 use tinyrenderer::geometry::Vec3f;
+use tinyrenderer::render::lookat;
 use tinyrenderer::render::m2v;
 use tinyrenderer::render::triangle_diffuse;
 use tinyrenderer::render::viewport;
@@ -35,12 +36,16 @@ fn main() {
     let height = 800;
     let depth = 255;
 
-    let light_dir = Vec3f { x: 0.2, y: 0.1, z: -1. };
+    let light_dir = Vec3f::new(0.2, 0.1, -1.0);
+    let eye = Vec3f::new(1.0, 1.0, 3.0);
+    let center = Vec3f::new(0.0, 0.0, 0.0);
 
-    let camera = Vec3f { x: 0.0, y: 0.0, z: 3.0 };
+    let model_view = lookat(eye, center, Vec3f::new(0.0, 1.0, 0.0));
     let mut projection = Matrix::identity(4);
-    projection.put(3, 2, -1.0/camera.z);
+    projection.put(3, 2, -1.0/(eye-center).norm());
     let view_port = viewport(width as f64/8.0, height as f64/8.0, width as f64*0.75, height as f64*0.75, depth as f64);
+
+    let vpmv = &view_port*&projection*&model_view;
 
     eprint!("rendering...");
     let timer = Instant::now();
@@ -51,9 +56,9 @@ fn main() {
         let w0 = head.vert(face.verts.x as usize);
         let w1 = head.vert(face.verts.y as usize);
         let w2 = head.vert(face.verts.z as usize);
-        let s0 = m2v(&view_port*&projection*&v2m(w0));
-        let s1 = m2v(&view_port*&projection*&v2m(w1));
-        let s2 = m2v(&view_port*&projection*&v2m(w2));
+        let s0 = m2v(&vpmv*&v2m(w0));
+        let s1 = m2v(&vpmv*&v2m(w1));
+        let s2 = m2v(&vpmv*&v2m(w2));
         let uv0 = head.uv(face.uvs.x as usize);
         let uv1 = head.uv(face.uvs.y as usize);
         let uv2 = head.uv(face.uvs.z as usize);

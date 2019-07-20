@@ -15,7 +15,7 @@ impl Image {
         Image {
             width: header.image_width,
             height: header.image_height,
-            flipped: false,
+            flipped: upsidedown,
             pixels: pixels,
         }
     }

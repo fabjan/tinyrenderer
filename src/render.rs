@@ -216,6 +216,12 @@ pub fn viewport(x: f64, y: f64, w: f64, h: f64, depth: f64) -> Matrix {
     vp
 }
 
+pub fn projection(coeff: f64) -> Matrix {
+    let mut projection = Matrix::identity(4);
+    projection.put(3, 2, coeff);
+    projection
+}
+
 pub fn lookat(eye: Vec3f, center: Vec3f, up: Vec3f) -> Matrix {
     let z = (eye-center).normalized();
     let x = up.cross(z).normalized();

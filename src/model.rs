@@ -94,6 +94,12 @@ impl Model {
     pub fn vert(&self, i: usize) -> Vec3f {
         self.verts[i]
     }
+    pub fn fvert(&self, f: usize, v: usize) -> Vec3f {
+        self.verts[self.faces[f].verts[v] as usize]
+    }
+    pub fn nfaces(&self) -> usize {
+        self.faces.len()
+    }
     pub fn face(&self, i: usize) -> &Face {
         &self.faces[i]
     }
@@ -105,5 +111,8 @@ impl Model {
     }
     pub fn norm(&self, i: usize) -> Vec3f {
         self.norms[i]
+    }
+    pub fn fnorm(&self, f: usize, v: usize) -> Vec3f {
+        self.norms[self.faces[f].norms[v] as usize]
     }
 }

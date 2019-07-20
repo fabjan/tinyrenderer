@@ -6,6 +6,7 @@ use std::io::BufWriter;
 use std::io::stdout;
 use std::time::Instant;
 
+use tinyrenderer::image::Color;
 use tinyrenderer::image::Image;
 use tinyrenderer::model::Model;
 use tinyrenderer::geometry::Matrix;
@@ -13,8 +14,9 @@ use tinyrenderer::geometry::Vec3f;
 
 use tinyrenderer::render::lookat;
 use tinyrenderer::render::projection;
-use tinyrenderer::render::triangle_diffuse;
 use tinyrenderer::render::viewport;
+use tinyrenderer::render::triangle;
+use tinyrenderer::render::Shader;
 
 macro_rules! f {
     ($e:expr) => ($e as f64);
@@ -23,10 +25,44 @@ macro_rules! f {
 const WIDTH: usize  = 800;
 const HEIGHT: usize = 800;
 
+struct GouraudShader<'a> {
+    model: &'a Model,
+    screen_transform: &'a Matrix,
+    light: Vec3f,
+    varying_intensity: Vec3f,
+}
+
+impl<'a> GouraudShader<'a> {
+    fn new(m: &'a Model, screen_transform: &'a Matrix, light_dir: Vec3f) -> GouraudShader<'a> {
+        GouraudShader {
+            model: m,
+            screen_transform: screen_transform,
+            light: light_dir,
+            varying_intensity: Vec3f::new(0.0, 0.0, 0.0),
+        }
+    }
+}
+
+impl Shader for GouraudShader<'_> {
+    fn vertex(&mut self, face_i: usize, vert_i: usize) -> Vec3f {
+        let intensity = self.model.fnorm(face_i, vert_i)*self.light;
+        self.varying_intensity[vert_i] = intensity.max(0.0);
+        let vert_m = Matrix::from_v(self.model.fvert(face_i, vert_i));
+        let transformed = self.screen_transform*&vert_m;
+        Vec3f::from_m(&transformed)
+    }
+
+    fn fragment(&mut self, bar: Vec3f, color: &mut Color) -> bool {
+        let intensity = self.varying_intensity*bar;
+        for i in 0..3 { color[i] = (255.0*intensity) as u8 }
+        true // render fragment
+    }
+}
+
 fn main() {
 
     // setup scene
-    let light  = Vec3f::new(0.2, 0.1, -1.0);
+    let light  = Vec3f::new(1.0, 1.0, 1.0).normalized();
     let eye    = Vec3f::new(1.0, 1.0, 3.0);
     let center = Vec3f::new(0.0, 0.0, 0.0);
 
@@ -34,33 +70,25 @@ fn main() {
     let projection = projection(-1.0/(eye-center).norm());
     let view_port  = viewport(f!(WIDTH)/8.0, f!(HEIGHT)/8.0,
                               f!(WIDTH)*0.75, f!(HEIGHT)*0.75, 255.);
+    let vpmv = &view_port*&projection*&model_view;
 
     // load resources
     let head = load_obj("african_head.obj");
-    let texture_image = load_tga("african_head_diffuse.tga");
+    //let texture_image = load_tga("african_head_diffuse.tga");
+
+    let mut shader = GouraudShader::new(&head, &vpmv, light);
 
     // draw stuff!
     eprint!("rendering...");
     let timer = Instant::now();
-    let vpmv = &view_port*&projection*&model_view;
     let mut canvas = Image::make(WIDTH, HEIGHT);
     canvas.flip();
     let mut zbuffer = vec![std::f64::MIN; WIDTH*HEIGHT];
-    for (_i, face) in head.faces().enumerate() {
-        let w0 = head.vert(face.verts.x as usize);
-        let w1 = head.vert(face.verts.y as usize);
-        let w2 = head.vert(face.verts.z as usize);
-        let s0 = Vec3f::from_m(&(&vpmv*&Matrix::from_v(w0)));
-        let s1 = Vec3f::from_m(&(&vpmv*&Matrix::from_v(w1)));
-        let s2 = Vec3f::from_m(&(&vpmv*&Matrix::from_v(w2)));
-        let uv0 = head.uv(face.uvs.x as usize);
-        let uv1 = head.uv(face.uvs.y as usize);
-        let uv2 = head.uv(face.uvs.z as usize);
-        let n = (w2-w0).cross(w1-w0).normalized();
-        let intensity = n*light;
-        if intensity > 0. {
-            triangle_diffuse(&mut canvas, &mut zbuffer, s0, s1, s2, uv0, uv1, uv2, &texture_image, intensity);
-        }
+    for i in 0..(head.nfaces()) {
+        let v0 = shader.vertex(i, 0);
+        let v1 = shader.vertex(i, 1);
+        let v2 = shader.vertex(i, 2);
+        triangle(&mut canvas, &mut zbuffer, &mut shader, v0, v1, v2);
     }
     eprintln!("...done ({}ms)", timer.elapsed().as_millis());
 

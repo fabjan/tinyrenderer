@@ -112,6 +112,17 @@ impl<T> ops::Index<usize> for Vec3<T> {
     }
 }
 
+impl<T> ops::IndexMut<usize> for Vec3<T> {
+  fn index_mut(&mut self, index: usize) -> &mut T {
+    match index {
+      0 => &mut self.x,
+      1 => &mut self.y,
+      2 => &mut self.z,
+      _ => panic!("dimension out of range")
+    }
+  }
+}
+
 impl Vec3f {
     pub fn norm(&self) -> f64 {
         (self.x*self.x + self.y*self.y + self.z*self.z).sqrt()

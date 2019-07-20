@@ -1,7 +1,7 @@
 test:
 	set -e;\
-	RENDER="render.$(date +%y-%m-%d_%H:%M:%S).pbm";\
-	cargo run --release > "${RENDER}"
+	RENDER="render.$$(date +%y-%m-%d_%H:%M:%S).pbm";\
+	cargo run --release > "$$RENDER"
 
 build:
 	cargo build --release

@@ -40,9 +40,9 @@ fn main() {
 
     // load resources
     let head = load_obj("african_head.obj");
-    //let texture_image = load_tga("african_head_diffuse.tga");
+    let texture_image = load_tga("african_head_diffuse.tga");
 
-    let mut shader = GouraudShader::new(&head, &vpmv, light);
+    let mut shader = GouraudShader::new(&head, &vpmv, &texture_image, light);
 
     // draw stuff!
     eprint!("rendering...");

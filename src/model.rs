@@ -1,12 +1,12 @@
 use std::io::BufRead;
 
 use crate::geometry::Vec3f;
-use crate::geometry::Vec3i;
+use crate::geometry::Vec3;
 
 pub struct Face {
-    pub verts: Vec3i,
-    pub uvs: Vec3i,
-    pub norms: Vec3i,
+    pub verts: Vec3<usize>,
+    pub uvs: Vec3<usize>,
+    pub norms: Vec3<usize>,
 }
 
 pub struct Model {
@@ -58,26 +58,26 @@ impl Model {
                         tokens.next().unwrap().split('/'),
                         tokens.next().unwrap().split('/'),
                     );
-                    let (v0, uv0, n0): (i32, i32, i32) = (
+                    let (v0, uv0, n0): (usize, usize, usize) = (
                         a.next().unwrap().parse().unwrap(),
                         a.next().unwrap().parse().unwrap(),
                         a.next().unwrap().parse().unwrap(),
                     );
-                    let (v1, uv1, n1): (i32, i32, i32) = (
+                    let (v1, uv1, n1): (usize, usize, usize) = (
                         b.next().unwrap().parse().unwrap(),
                         b.next().unwrap().parse().unwrap(),
                         b.next().unwrap().parse().unwrap(),
                     );
-                    let (v2, uv2, n2): (i32, i32, i32) = (
+                    let (v2, uv2, n2): (usize, usize, usize) = (
                         c.next().unwrap().parse().unwrap(),
                         c.next().unwrap().parse().unwrap(),
                         c.next().unwrap().parse().unwrap(),
                     );
                     // in wavefront obj all indices start at 1, not zero
                     let face = Face {
-                        verts: Vec3i { x: v0-1, y: v1-1, z: v2-1 },
-                        uvs: Vec3i { x: uv0-1, y: uv1-1, z: uv2-1 },
-                        norms: Vec3i { x: n0-1, y: n1-1, z: n2-1},
+                        verts: Vec3::new(v0-1, v1-1, v2-1),
+                        uvs: Vec3::new(uv0-1, uv1-1, uv2-1),
+                        norms: Vec3::new(n0-1, n1-1, n2-1),
                     };
                     obj_faces.push(face);
                 }
@@ -95,7 +95,7 @@ impl Model {
         self.verts[i]
     }
     pub fn fvert(&self, f: usize, v: usize) -> Vec3f {
-        self.verts[self.faces[f].verts[v] as usize]
+        self.verts[self.faces[f].verts[v]]
     }
     pub fn nfaces(&self) -> usize {
         self.faces.len()
@@ -109,10 +109,13 @@ impl Model {
     pub fn uv(&self, i: usize) -> Vec3f {
         self.uvs[i]
     }
+    pub fn fuv(&self, f: usize, v: usize) -> Vec3f {
+        self.uvs[self.faces[f].uvs[v]]
+    }
     pub fn norm(&self, i: usize) -> Vec3f {
         self.norms[i]
     }
     pub fn fnorm(&self, f: usize, v: usize) -> Vec3f {
-        self.norms[self.faces[f].norms[v] as usize]
+        self.norms[self.faces[f].norms[v]]
     }
 }

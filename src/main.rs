@@ -6,17 +6,17 @@ use std::io::BufWriter;
 use std::io::stdout;
 use std::time::Instant;
 
-use tinyrenderer::image::Color;
 use tinyrenderer::image::Image;
 use tinyrenderer::model::Model;
-use tinyrenderer::geometry::Matrix;
 use tinyrenderer::geometry::Vec3f;
 
 use tinyrenderer::render::lookat;
 use tinyrenderer::render::projection;
 use tinyrenderer::render::viewport;
 use tinyrenderer::render::triangle;
+
 use tinyrenderer::render::Shader;
+use tinyrenderer::shaders::GouraudShader;
 
 macro_rules! f {
     ($e:expr) => ($e as f64);
@@ -24,40 +24,6 @@ macro_rules! f {
 
 const WIDTH: usize  = 800;
 const HEIGHT: usize = 800;
-
-struct GouraudShader<'a> {
-    model: &'a Model,
-    screen_transform: &'a Matrix,
-    light: Vec3f,
-    varying_intensity: Vec3f,
-}
-
-impl<'a> GouraudShader<'a> {
-    fn new(m: &'a Model, screen_transform: &'a Matrix, light_dir: Vec3f) -> GouraudShader<'a> {
-        GouraudShader {
-            model: m,
-            screen_transform: screen_transform,
-            light: light_dir,
-            varying_intensity: Vec3f::new(0.0, 0.0, 0.0),
-        }
-    }
-}
-
-impl Shader for GouraudShader<'_> {
-    fn vertex(&mut self, face_i: usize, vert_i: usize) -> Vec3f {
-        let intensity = self.model.fnorm(face_i, vert_i)*self.light;
-        self.varying_intensity[vert_i] = intensity.max(0.0);
-        let vert_m = Matrix::from_v(self.model.fvert(face_i, vert_i));
-        let transformed = self.screen_transform*&vert_m;
-        Vec3f::from_m(&transformed)
-    }
-
-    fn fragment(&mut self, bar: Vec3f, color: &mut Color) -> bool {
-        let intensity = self.varying_intensity*bar;
-        for i in 0..3 { color[i] = (255.0*intensity) as u8 }
-        true // render fragment
-    }
-}
 
 fn main() {
 

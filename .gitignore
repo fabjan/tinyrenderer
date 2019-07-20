@@ -1,0 +1,5 @@
+*.obj
+*.pbm
+*.swp
+*.tga
+/target

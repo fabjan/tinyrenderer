@@ -5,4 +5,3 @@ authors = ["Fabian Bergström <fabian@fmbb.se>"]
 edition = "2018"
 
 [dependencies]
-rand = "0.7.0"

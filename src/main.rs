@@ -1,4 +1,3 @@
-extern crate rand;
 extern crate tinyrenderer;
 
 use std::fs::File;

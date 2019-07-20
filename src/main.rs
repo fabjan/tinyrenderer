@@ -8,13 +8,13 @@ use std::time::Instant;
 
 use tinyrenderer::image::Image;
 use tinyrenderer::model::Model;
+use tinyrenderer::geometry::Matrix;
 use tinyrenderer::geometry::Vec3f;
+
 use tinyrenderer::render::lookat;
-use tinyrenderer::render::m2v;
 use tinyrenderer::render::projection;
 use tinyrenderer::render::triangle_diffuse;
 use tinyrenderer::render::viewport;
-use tinyrenderer::render::v2m;
 
 macro_rules! f {
     ($e:expr) => ($e as f64);
@@ -50,9 +50,9 @@ fn main() {
         let w0 = head.vert(face.verts.x as usize);
         let w1 = head.vert(face.verts.y as usize);
         let w2 = head.vert(face.verts.z as usize);
-        let s0 = m2v(&vpmv*&v2m(w0));
-        let s1 = m2v(&vpmv*&v2m(w1));
-        let s2 = m2v(&vpmv*&v2m(w2));
+        let s0 = Vec3f::from_m(&(&vpmv*&Matrix::from_v(w0)));
+        let s1 = Vec3f::from_m(&(&vpmv*&Matrix::from_v(w1)));
+        let s2 = Vec3f::from_m(&(&vpmv*&Matrix::from_v(w2)));
         let uv0 = head.uv(face.uvs.x as usize);
         let uv1 = head.uv(face.uvs.y as usize);
         let uv2 = head.uv(face.uvs.z as usize);

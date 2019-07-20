@@ -185,23 +185,6 @@ fn barycentric(a: Vec3f, b: Vec3f, c: Vec3f, p: Vec3f) -> Vec3f {
     }
 }
 
-pub fn m2v(m: Matrix) -> Vec3f {
-    Vec3f {
-        x: m.get(0, 0)/m.get(3, 0),
-        y: m.get(1, 0)/m.get(3, 0),
-        z: m.get(2, 0)/m.get(3, 0),
-    }
-}
-
-pub fn v2m(v: Vec3f) -> Matrix {
-    let mut m = Matrix::new(4, 1);
-    m.put(0, 0, v.x);
-    m.put(1, 0, v.y);
-    m.put(2, 0, v.z);
-    m.put(3, 0, 1.0);
-    m
-}
-
 pub fn viewport(x: f64, y: f64, w: f64, h: f64, depth: f64) -> Matrix {
     let mut vp = Matrix::identity(4);
 

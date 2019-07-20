@@ -57,6 +57,13 @@ impl Vec3f {
     pub fn zero() -> Vec3f {
         Vec3f { x: 0., y: 0., z: 0. }
     }
+    pub fn from_m(m: &Matrix) -> Vec3f {
+        Vec3f {
+            x: m.get(0, 0)/m.get(3, 0),
+            y: m.get(1, 0)/m.get(3, 0),
+            z: m.get(2, 0)/m.get(3, 0),
+        }
+    }
 }
 
 impl<T: fmt::Display> fmt::Display for Vec3<T> {
@@ -164,6 +171,14 @@ impl Matrix {
             }
         }
         result
+    }
+    pub fn from_v(v: Vec3f) -> Matrix {
+        let mut m = Matrix::new(4, 1);
+        m.put(0, 0, v.x);
+        m.put(1, 0, v.y);
+        m.put(2, 0, v.z);
+        m.put(3, 0, 1.0);
+        m
     }
     pub fn get(&self, row: usize, col: usize) -> f64 {
         self.m[row][col]

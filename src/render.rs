@@ -37,8 +37,10 @@ pub fn triangle(canvas: &mut Image, zbuffer: &mut Vec<f64>, shader: &mut Shader,
             if zbuffer[fragment_index]<p.z {
                 zbuffer[fragment_index] = p.z;
                 let mut color = [ 0, 0, 0 ];
-                shader.fragment(bc_screen, &mut color);
-                canvas.put(p.x as usize, p.y as usize, color);
+                let keep_fragment = shader.fragment(bc_screen, &mut color);
+                if keep_fragment {
+                    canvas.put(p.x as usize, p.y as usize, color);
+                }
             }
         }
     }

@@ -1,42 +1,51 @@
 extern crate tinyrenderer;
 
 use std::fs::File;
+use std::io::stdout;
 use std::io::BufReader;
 use std::io::BufWriter;
-use std::io::stdout;
 use std::time::Instant;
 
+use tinyrenderer::geometry::Vec3f;
 use tinyrenderer::image::Image;
 use tinyrenderer::model::Model;
-use tinyrenderer::geometry::Vec3f;
 
 use tinyrenderer::render::lookat;
 use tinyrenderer::render::projection;
-use tinyrenderer::render::viewport;
 use tinyrenderer::render::triangle;
+use tinyrenderer::render::viewport;
 
 use tinyrenderer::render::Shader;
 use tinyrenderer::shaders::GouraudShader;
 
+// I wanted to macro, don't judge!
 macro_rules! f {
-    ($e:expr) => ($e as f64);
+    ($e:expr) => {
+        $e as f64
+    };
 }
 
-const WIDTH: usize  = 800;
+const WIDTH: usize = 800;
 const HEIGHT: usize = 800;
 
 fn main() {
+    // TODO move hard coded things to argv
 
     // setup scene
-    let light  = Vec3f::new(1.0, 1.0, 1.0).normalized();
-    let eye    = Vec3f::new(1.0, 1.0, 3.0);
+    let light = Vec3f::new(1.0, 1.0, 1.0).normalized();
+    let eye = Vec3f::new(1.0, 1.0, 3.0);
     let center = Vec3f::new(0.0, 0.0, 0.0);
 
     let model_view = lookat(eye, center, Vec3f::new(0.0, 1.0, 0.0));
-    let projection = projection(-1.0/(eye-center).norm());
-    let view_port  = viewport(f!(WIDTH)/8.0, f!(HEIGHT)/8.0,
-                              f!(WIDTH)*0.75, f!(HEIGHT)*0.75, 255.);
-    let vpmv = &view_port*&projection*&model_view;
+    let projection = projection(-1.0 / (eye - center).norm());
+    let view_port = viewport(
+        f!(WIDTH) / 8.0,
+        f!(HEIGHT) / 8.0,
+        f!(WIDTH) * 0.75,
+        f!(HEIGHT) * 0.75,
+        255.,
+    );
+    let vpmv = &view_port * &projection * &model_view;
 
     // load resources
     let head = load_obj("african_head.obj");
@@ -49,7 +58,7 @@ fn main() {
     let timer = Instant::now();
     let mut canvas = Image::make(WIDTH, HEIGHT);
     canvas.flip();
-    let mut zbuffer = vec![std::f64::MIN; WIDTH*HEIGHT];
+    let mut zbuffer = vec![std::f64::MIN; WIDTH * HEIGHT];
     for i in 0..(head.nfaces()) {
         let v0 = shader.vertex(i, 0);
         let v1 = shader.vertex(i, 1);

@@ -1,3 +1,4 @@
+//! Some (well, one) example shader implementations.
 use crate::geometry::Matrix;
 use crate::geometry::Vec3f;
 use crate::image::Color;
@@ -5,6 +6,8 @@ use crate::image::Image;
 use crate::model::Model;
 use crate::render::Shader;
 
+/// A classic smooth shader!
+/// https://en.wikipedia.org/wiki/Gouraud_shading
 pub struct GouraudShader<'a> {
     model: &'a Model,
     screen_transform: &'a Matrix,
@@ -15,12 +18,17 @@ pub struct GouraudShader<'a> {
 }
 
 impl<'a> GouraudShader<'a> {
-    pub fn new(m: &'a Model, screen_transform: &'a Matrix, diffuse: &'a Image, light_dir: Vec3f) -> GouraudShader<'a> {
+    pub fn new(
+        model: &'a Model,
+        screen_transform: &'a Matrix,
+        diffuse_texture: &'a Image,
+        light: Vec3f,
+    ) -> GouraudShader<'a> {
         GouraudShader {
-            model: m,
-            screen_transform: screen_transform,
-            diffuse_texture: diffuse,
-            light: light_dir,
+            model,
+            screen_transform,
+            diffuse_texture,
+            light,
             varying_intensity: Vec3f::zero(),
             varying_uv: Matrix::new(2, 3),
         }
@@ -29,18 +37,20 @@ impl<'a> GouraudShader<'a> {
 
 impl Shader for GouraudShader<'_> {
     fn vertex(&mut self, face_i: usize, vert_i: usize) -> Vec3f {
-        let intensity = self.model.fnorm(face_i, vert_i)*self.light;
+        let intensity = self.model.fnorm(face_i, vert_i) * self.light;
         m_put_col(&mut self.varying_uv, vert_i, self.model.fuv(face_i, vert_i));
         self.varying_intensity[vert_i] = intensity.max(0.0);
         let vert_m = Matrix::from_v(self.model.fvert(face_i, vert_i));
-        let transformed = self.screen_transform*&vert_m;
+        let transformed = self.screen_transform * &vert_m;
         Vec3f::from_m(&transformed)
     }
     fn fragment(&mut self, bar: Vec3f, color: &mut Color) -> bool {
-        let intensity = self.varying_intensity*bar;
+        let intensity = self.varying_intensity * bar;
         let uv = m_mul_v(&self.varying_uv, bar);
         let mut diffuse = self.diffuse_texture.get_unit(uv.x, uv.y);
-        for c in 0..3 { diffuse[c] = (diffuse[c] as f64 * intensity) as u8 }
+        for c in 0..3 {
+            diffuse[c] = (diffuse[c] as f64 * intensity) as u8
+        }
         *color = diffuse;
         true // render fragment
     }

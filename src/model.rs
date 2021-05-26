@@ -19,6 +19,7 @@
 //!
 
 use std::io::BufRead;
+use std::str::FromStr;
 
 use crate::geometry::Vec3;
 use crate::geometry::Vec3f;
@@ -47,57 +48,38 @@ impl Model {
         let mut obj_norms = Vec::new();
         let mut obj_faces = Vec::new();
         for line in obj_data.lines() {
-            let line = line.unwrap();
-            let mut tokens = line.split(' ');
+            let line = line.expect("line cannot be empty");
+            let tokens = &mut line.split_whitespace();
             match tokens.next() {
                 Some("v") => {
-                    let (x, y, z) = (
-                        tokens.next().unwrap().parse().unwrap(),
-                        tokens.next().unwrap().parse().unwrap(),
-                        tokens.next().unwrap().parse().unwrap(),
-                    );
+                    let (x, y, z) = parse_triplet(tokens);
                     obj_verts.push(Vec3f { x, y, z });
                 }
                 Some("vt") => {
-                    tokens.next(); // skip an extra space
+                    // not all obj files have 3 dimensions for the uv coords
                     let (x, y, z) = (
-                        tokens.next().unwrap().parse().unwrap(),
-                        tokens.next().unwrap().parse().unwrap(),
-                        tokens.next().unwrap().parse().unwrap(),
+                        parse_next(tokens),
+                        parse_next(tokens),
+                        parse_next_or(tokens, 0.),
                     );
-                    obj_uvs.push(Vec3f { x, y, z })
+                    obj_uvs.push(Vec3f { x, y, z });
                 }
                 Some("vn") => {
-                    tokens.next(); // skip an extra space
-                    let (x, y, z) = (
-                        tokens.next().unwrap().parse().unwrap(),
-                        tokens.next().unwrap().parse().unwrap(),
-                        tokens.next().unwrap().parse().unwrap(),
-                    );
-                    obj_norms.push(Vec3f { x, y, z })
+                    let (x, y, z) = parse_triplet(tokens);
+                    obj_norms.push(Vec3f { x, y, z });
                 }
                 Some("f") => {
                     let (mut a, mut b, mut c) = (
-                        tokens.next().unwrap().split('/'),
-                        tokens.next().unwrap().split('/'),
-                        tokens.next().unwrap().split('/'),
+                        tokens.next().expect("face missing v0").split('/'),
+                        tokens.next().expect("face missing v1").split('/'),
+                        tokens.next().expect("face missing v2").split('/'),
                     );
-                    let (v0, uv0, n0): (usize, usize, usize) = (
-                        a.next().unwrap().parse().unwrap(),
-                        a.next().unwrap().parse().unwrap(),
-                        a.next().unwrap().parse().unwrap(),
-                    );
-                    let (v1, uv1, n1): (usize, usize, usize) = (
-                        b.next().unwrap().parse().unwrap(),
-                        b.next().unwrap().parse().unwrap(),
-                        b.next().unwrap().parse().unwrap(),
-                    );
-                    let (v2, uv2, n2): (usize, usize, usize) = (
-                        c.next().unwrap().parse().unwrap(),
-                        c.next().unwrap().parse().unwrap(),
-                        c.next().unwrap().parse().unwrap(),
-                    );
-                    // in wavefront obj all indices start at 1, not zero
+
+                    let (v0, uv0, n0): (usize, usize, usize) = parse_triplet(&mut a);
+                    let (v1, uv1, n1): (usize, usize, usize) = parse_triplet(&mut b);
+                    let (v2, uv2, n2): (usize, usize, usize) = parse_triplet(&mut c);
+
+                    // in wavefront obj indices start at 1, not 0
                     let face = Face {
                         verts: Vec3::new(v0 - 1, v1 - 1, v2 - 1),
                         uvs: Vec3::new(uv0 - 1, uv1 - 1, uv2 - 1),
@@ -159,4 +141,35 @@ impl Model {
     pub fn fnorm(&self, f: usize, v: usize) -> Vec3f {
         self.norms[self.faces[f].norms[v]]
     }
+}
+
+fn parse_triplet<T>(tokens: &mut dyn Iterator<Item = &str>) -> (T, T, T)
+where
+    T: std::str::FromStr,
+    <T as std::str::FromStr>::Err: std::fmt::Debug,
+{
+    (parse_next(tokens), parse_next(tokens), parse_next(tokens))
+}
+
+fn parse_next<T: FromStr>(tokens: &mut dyn Iterator<Item = &str>) -> T
+where
+    T: std::str::FromStr,
+    <T as std::str::FromStr>::Err: std::fmt::Debug,
+{
+    tokens
+        .next()
+        .expect("not enough tokens")
+        .parse()
+        .expect("cannot parse token")
+}
+
+fn parse_next_or<T: FromStr>(tokens: &mut dyn Iterator<Item = &str>, default: T) -> T
+where
+    T: std::str::FromStr,
+    <T as std::str::FromStr>::Err: std::fmt::Debug,
+{
+    tokens
+        .next()
+        .map(|t| t.parse().expect("cannot parse token"))
+        .unwrap_or(default)
 }

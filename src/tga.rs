@@ -112,7 +112,7 @@ fn read_image_data_rle<R: Read>(
     width: usize,
     upsidedown: bool,
 ) -> Vec<[u8; 3]> {
-    // TODO texture loading seems slow, profile this
+    // TODO texture loading is _really_ slow, profile this
     let mut pixels = Vec::new();
     while pixels.len() < count {
         let mut row = read_pixel_row_rle(data, width);

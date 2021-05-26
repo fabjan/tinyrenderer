@@ -44,12 +44,12 @@ impl Shader for GouraudShader<'_> {
         let transformed = self.screen_transform * &vert_m;
         Vec3f::from_m(&transformed)
     }
-    fn fragment(&mut self, bar: Vec3f, color: &mut Color) -> bool {
-        let intensity = self.varying_intensity * bar;
-        let uv = m_mul_v(&self.varying_uv, bar);
+    fn fragment(&mut self, coords: Vec3f, color: &mut Color) -> bool {
+        let intensity = self.varying_intensity * coords;
+        let uv = m_mul_v(&self.varying_uv, coords);
         let mut diffuse = self.diffuse_texture.get_unit(uv.x, uv.y);
-        for c in 0..3 {
-            diffuse[c] = (diffuse[c] as f64 * intensity) as u8
+        for c in &mut diffuse {
+            *c = (*c as f64 * intensity) as u8
         }
         *color = diffuse;
         true // render fragment

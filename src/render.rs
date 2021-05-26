@@ -33,16 +33,17 @@ pub fn triangle(
         ymin = ymin.min(v.y);
         ymax = ymax.max(v.y);
     }
-    xmin = xmin.max(0.);
-    xmax = xmax.min(canvas.width as f64);
-    ymin = ymin.max(0.);
-    ymax = ymax.min(canvas.height as f64);
+
+    let xmin = (xmin as usize).max(0);
+    let xmax = (xmax as usize).min(canvas.width);
+    let ymin = (ymin as usize).max(0);
+    let ymax = (ymax as usize).min(canvas.height);
 
     // for every pixel p inside the box ...
     let mut p = Vec3f::zero();
-    for x in (xmin as usize)..(xmax as usize + 1) {
+    for x in xmin..=xmax {
         p.x = x as f64;
-        for y in (ymin as usize)..(ymax as usize + 1) {
+        for y in ymin..=ymax {
             p.y = y as f64;
 
             // ... calculate the barycentric coordinates for p
@@ -74,6 +75,7 @@ pub fn triangle(
 
 /// The [barycentric coordinates] for p in the triangle a,b,c.
 /// [barycentric coordinates]: https://en.wikipedia.org/wiki/Barycentric_coordinate_system
+#[allow(clippy::many_single_char_names)]
 fn barycentric(a: Vec3f, b: Vec3f, c: Vec3f, p: Vec3f) -> Vec3f {
     let xs = Vec3f {
         x: c.x - a.x,

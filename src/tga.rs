@@ -55,7 +55,7 @@ impl TgaHeader {
 
         // not all fields are used in this code,
         // but they are named for clarity
-        let id_length = id_length[0];
+        let _id_length = id_length[0];
         let _colormap_type = colormap_type[0];
         let image_type = image_type[0];
 
@@ -69,12 +69,10 @@ impl TgaHeader {
         let image_height = to_u16(&image_spec[6..8]) as usize;
         let bit_depth = image_spec[8];
         let image_desc = image_spec[9];
-        let _alpha_bits = image_desc & 0b00001111u8;
-        let origin = (image_desc & 0b00110000u8) >> 4;
+        let _alpha_bits = image_desc & 0b0000_1111;
+        let origin = (image_desc & 0b0011_0000) >> 4;
 
-        // these optional fields are not supported
-        assert_eq!(id_length, 0);
-        assert_eq!(colormap_length, 0);
+        assert_eq!(colormap_length, 0, "color maps are not supported");
 
         TgaHeader {
             image_type,
@@ -126,20 +124,20 @@ fn read_pixel_packet<R: Read>(source: &mut R, sink: &mut Vec<[u8; 3]>) {
     source
         .read_exact(&mut packet_header)
         .expect("unable to read RLE packet header");
-    let packet_type = (packet_header[0] & 0b10000000) >> 7;
-    let packet_size = packet_header[0] & 0b01111111;
+    let packet_type = (packet_header[0] & 0b1000_0000) >> 7;
+    let packet_size = packet_header[0] & 0b0111_1111;
     if packet_type == 1 {
         // 1 means RLE packet
         source
             .read_exact(&mut pixel_value)
             .expect("unable to read RLE packet");
         pixel_value.reverse(); // "fix" BGR
-        for _i in 0..(packet_size + 1) {
+        for _ in 0..=packet_size {
             sink.push(pixel_value);
         }
     } else {
         // 0 means raw packet
-        for _i in 0..(packet_size + 1) {
+        for _ in 0..=packet_size {
             source
                 .read_exact(&mut pixel_value)
                 .expect("unable to read raw packet");

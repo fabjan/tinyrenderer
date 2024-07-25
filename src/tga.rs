@@ -17,7 +17,7 @@
 //! but wanted to try to have no deps outside of std.
 //!
 
-use std::io::Read;
+use std::io::{BufReader, Read};
 
 use crate::image::Image;
 
@@ -112,54 +112,57 @@ fn read_image_data_rle<R: Read>(
     width: usize,
     upsidedown: bool,
 ) -> Vec<[u8; 3]> {
-    // TODO texture loading is _really_ slow, profile this
-    let mut pixels = Vec::new();
-    while pixels.len() < count {
-        let mut row = read_pixel_row_rle(data, width);
-        if upsidedown {
-            row.extend(pixels);
-            pixels = row;
-        } else {
-            pixels.extend(row);
-        }
+    let num_rows = count / width;
+    let mut reader = BufReader::new(data);
+    let mut pixels = vec![[0u8; 3]; count];
+
+    for r in 0..num_rows {
+        let i = if upsidedown { num_rows - r - 1 } else { r };
+        let row_start = i * width;
+        let row_end = row_start + width;
+        read_pixel_row_rle(&mut reader, width, &mut pixels[row_start..row_end]);
     }
+
     pixels
 }
 
-fn read_pixel_row_rle<R: Read>(source: &mut R, width: usize) -> Vec<[u8; 3]> {
-    let mut pixel_row = Vec::new();
-    while pixel_row.len() < width {
+fn read_pixel_row_rle<R: Read>(source: &mut R, width: usize, row_buffer: &mut [[u8; 3]]) {
+    let mut pos = 0;
+    while pos < width {
         // RLE packets should not pass the image width
-        read_pixel_packet(source, &mut pixel_row);
+        pos += read_pixel_packet(source, &mut row_buffer[pos..]);
     }
-    pixel_row
 }
 
-fn read_pixel_packet<R: Read>(source: &mut R, sink: &mut Vec<[u8; 3]>) {
+fn read_pixel_packet<R: Read>(source: &mut R, sink: &mut [[u8; 3]]) -> usize {
     let mut packet_header = [0];
     let mut pixel_value = [0, 0, 0];
     source
         .read_exact(&mut packet_header)
         .expect("unable to read RLE packet header");
     let packet_type = (packet_header[0] & 0b1000_0000) >> 7;
-    let packet_size = packet_header[0] & 0b0111_1111;
+    // This 7 bit value is actually encoded as 1 less than the number
+    // of pixels in the packet.
+    let packet_size = (packet_header[0] & 0b0111_1111) as usize + 1;
     if packet_type == 1 {
         // 1 means RLE packet
         source
             .read_exact(&mut pixel_value)
             .expect("unable to read RLE packet");
         pixel_value.reverse(); // "fix" BGR
-        for _ in 0..=packet_size {
-            sink.push(pixel_value);
+        for i in 0..packet_size {
+            sink[i] = pixel_value;
         }
     } else {
         // 0 means raw packet
-        for _ in 0..=packet_size {
+        for i in 0..packet_size {
             source
                 .read_exact(&mut pixel_value)
                 .expect("unable to read raw packet");
             pixel_value.reverse(); // "fix" BGR
-            sink.push(pixel_value);
+            sink[i] = pixel_value;
         }
     }
+
+    packet_size
 }

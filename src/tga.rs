@@ -141,19 +141,21 @@ fn read_pixel_packet<R: Read>(source: &mut R, sink: &mut [[u8; 3]]) -> usize {
         .read_exact(&mut packet_header)
         .expect("unable to read RLE packet header");
     let packet_type = (packet_header[0] & 0b1000_0000) >> 7;
-    let packet_size = (packet_header[0] & 0b0111_1111) as usize;
+    // This 7 bit value is actually encoded as 1 less than the number
+    // of pixels in the packet.
+    let packet_size = (packet_header[0] & 0b0111_1111) as usize + 1;
     if packet_type == 1 {
         // 1 means RLE packet
         source
             .read_exact(&mut pixel_value)
             .expect("unable to read RLE packet");
         pixel_value.reverse(); // "fix" BGR
-        for i in 0..=packet_size {
+        for i in 0..packet_size {
             sink[i] = pixel_value;
         }
     } else {
         // 0 means raw packet
-        for i in 0..=packet_size {
+        for i in 0..packet_size {
             source
                 .read_exact(&mut pixel_value)
                 .expect("unable to read raw packet");
@@ -162,5 +164,5 @@ fn read_pixel_packet<R: Read>(source: &mut R, sink: &mut [[u8; 3]]) -> usize {
         }
     }
 
-    packet_size + 1
+    packet_size
 }
